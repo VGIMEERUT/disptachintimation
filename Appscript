@@ -1,0 +1,111 @@
+/* ==================================
+   AUTO SEND ON FORM SUBMIT (FINAL)
+================================== */
+function onSpreadsheetSubmit(e) {
+  if (!e || !e.namedValues) return;
+  sendMailFromRow(e.namedValues);
+}
+
+/* ==================================
+   MAIN MAIL FUNCTION (FINAL)
+================================== */
+function sendMailFromRow(data) {
+
+  function get(key) {
+
+  key = String(key).trim();
+
+  for (var k in data) {
+
+    if (String(k).trim() === key) {
+
+      var value = data[k];
+
+      if (Array.isArray(value)) {
+        return String(value[0] || "").trim();
+      }
+
+      return String(value || "").trim();
+    }
+  }
+
+  return "";
+}
+
+  var partyEmail = get("Party Email");
+  if (!partyEmail) return;
+
+  var invoiceNo = get("Invoice Number") || "-";
+  var subject = "Dispatch Intimation – Invoice No. " + invoiceNo;
+
+  var logoUrl = "https://saruaikoh.com/wp-content/uploads/2025/11/saru-logo.png";
+
+  var invoiceLink = get("Invoice PDF");
+  var grLink      = get("GR / LR Copy");
+
+  function row(label, value) {
+    if (!value) value = "-";
+    return `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #eee;font-weight:600;width:38%">${label}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee">${value}</td>
+      </tr>`;
+  }
+
+  var htmlBody = `
+  <div style="background:#f6f7f9;padding:30px">
+    <div style="max-width:680px;margin:auto;background:#fff;padding:32px;
+      font-family:Arial,Helvetica,sans-serif;color:#333">
+
+      <img src="${logoUrl}" style="max-width:200px;margin-bottom:25px">
+
+      <p>Dear Sir,</p>
+
+      <p>
+        Greetings from <strong>Saru Aikoh Chemicals Pvt. Ltd.</strong><br>
+        We are pleased to inform you that your material has been successfully dispatched.
+      </p>
+
+      <table width="100%" style="border-collapse:collapse;font-size:13.5px">
+        ${row("Consignee", get("Party Name"))}
+        ${row("Invoice No.", invoiceNo)}
+        ${row("Invoice Date", get("Invoice Date"))}
+        ${row("From", get("From"))}
+        ${row("To", get("To"))}
+        ${row("Transporter", get("Transporter Name"))}
+        ${row("GR / LR No.", get("GR / LR / Transport No"))}
+        ${row("ETA", get("ETA"))}
+      </table>
+
+      <p style="margin-top:16px"><strong>Documents:</strong></p>
+      <p>
+        Invoice PDF:
+        ${invoiceLink ? `<a href="${invoiceLink}" target="_blank">Download</a>` : "Not available"}<br>
+        GR / LR Copy:
+        ${grLink ? `<a href="${grLink}" target="_blank">Download</a>` : "Not available"}
+      </p>
+
+      <p>
+        Kindly acknowledge receipt of the material once it reaches you.
+      </p>
+
+      <p>
+        Warm regards,<br>
+        <strong>Saru Aikoh Chemicals Pvt. Ltd.</strong>
+      </p>
+
+    </div>
+  </div>
+  `;
+
+ GmailApp.sendEmail(
+  partyEmail,
+  subject,
+  "Dispatch Intimation",
+  {
+    htmlBody: htmlBody,
+    name: "Saru Aikoh Chemicals Pvt. Ltd.",
+    cc: "sales@saruaikoh.com,info@saruaikoh.com"
+  }
+);
+}
